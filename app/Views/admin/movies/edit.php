@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../../../../includes/header.php';
 ?>
@@ -15,6 +14,9 @@ require_once __DIR__ . '/../../../../includes/header.php';
     <?php if (!empty($movie)): ?>
 
         <form method="POST" action="/movies-booking/admin/movies/update">
+
+            <!-- ADDED CSRF TOKEN HERE -->
+            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
 
             <input
                 type="hidden"

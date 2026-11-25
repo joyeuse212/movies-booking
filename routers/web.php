@@ -200,3 +200,9 @@ $router->post('/admin/movies/delete', function () use ($conn) {
     $controller = new MovieController($conn);
     $controller->delete();
 });
+// ================= API ROUTES =================
+// JSON API for Live Search
+$router->get('/api/movies/search', function () use ($conn) {
+    $controller = new MovieController($conn);
+    $controller->searchJson();
+});

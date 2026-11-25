@@ -69,40 +69,41 @@ class MovieController
     }
 
     // ADMIN: Display all movies
-    
-// ADMIN: Display movie form and all movies
-public function adminIndex(): void
-{
-    $movieModel = new Movie($this->conn);
-    $movies = $movieModel->getAllMovies();
+    public function adminIndex(): void
+    {
+        $movieModel = new Movie($this->conn);
+        $movies = $movieModel->getAllMovies();
 
-    $pageTitle = 'Manage Movies | SCREENHOUSE';
+        $pageTitle = 'Manage Movies | SCREENHOUSE';
+        $basePath = '../'; 
 
-    $message = '';
-    $error = '';
+        $message = '';
+        $error = '';
 
-    $old = [
-        'title' => '',
-        'genre' => '',
-        'duration' => ''
-    ];
+        $old = [
+            'title' => '',
+            'genre' => '',
+            'duration' => ''
+        ];
 
-    $status = $_GET['status'] ?? '';
+        $status = $_GET['status'] ?? '';
 
-    if ($status === 'deleted') {
-        $message = 'Movie deleted successfully.';
-    } elseif ($status === 'added') {
-        $message = 'Movie added successfully.';
-    } elseif ($status === 'updated') {
-        $message = 'Movie updated successfully.';
-    } elseif ($status === 'not_found') {
-        $error = 'Movie not found.';
-    } elseif ($status === 'delete_error') {
-        $error = 'This movie cannot be deleted because it has showtimes or related bookings.';
+        if ($status === 'deleted') {
+            $message = 'Movie deleted successfully.';
+        } elseif ($status === 'added') {
+            $message = 'Movie added successfully.';
+        } elseif ($status === 'updated') {
+            $message = 'Movie updated successfully.';
+        } elseif ($status === 'not_found') {
+            $error = 'Movie not found.';
+        } elseif ($status === 'delete_error') {
+            $error = 'This movie cannot be deleted because it has showtimes or related bookings.';
+        } elseif ($status === 'csrf_error') {
+            $error = 'Security token invalid. Please try again.';
+        }
+
+        require __DIR__ . '/../Views/admin/movies/index.php';
     }
-
-    require __DIR__ . '/../Views/admin/movies/index.php';
-}
 
     // ADMIN: Display Add Movie form
     public function create(): void
@@ -121,54 +122,55 @@ public function adminIndex(): void
     }
 
     // ADMIN: Save new movie
-
-// ADMIN: Save new movie
-public function store(): void
-{
-    $title = trim($_POST['title'] ?? '');
-    $genre = trim($_POST['genre'] ?? '');
-    $durationInput = $_POST['duration'] ?? '';
-    $duration = filter_var($durationInput, FILTER_VALIDATE_INT);
-
-    $movieModel = new Movie($this->conn);
-
-    if (
-        $title === '' ||
-        $genre === '' ||
-        $duration === false ||
-        $duration <= 0
-    ) {
-        $error = 'Please enter all movie information correctly.';
-    } else {
-        try {
-            if ($movieModel->createMovie($title, $genre, $duration)) {
-                header('Location: /movies-booking/admin/movies?status=added');
-                exit;
-            }
-
-            $error = 'Unable to add the movie. Please try again.';
-
-        } catch (PDOException $e) {
-            $error = 'Unable to add the movie. Please try again.';
+    public function store(): void
+    {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            header('Location: /movies-booking/admin/movies?status=csrf_error');
+            exit;
         }
+
+        $title = trim($_POST['title'] ?? '');
+        $genre = trim($_POST['genre'] ?? '');
+        $durationInput = $_POST['duration'] ?? '';
+        $duration = filter_var($durationInput, FILTER_VALIDATE_INT);
+
+        $movieModel = new Movie($this->conn);
+
+        // 2. Server-side Validation
+        if (
+            strlen($title) < 2 || 
+            strlen($genre) < 2 || 
+            $duration === false || 
+            $duration <= 0
+        ) {
+            $error = 'Please enter valid movie information.';
+        } else {
+            try {
+                if ($movieModel->createMovie($title, $genre, $duration)) {
+                    header('Location: /movies-booking/admin/movies?status=added');
+                    exit;
+                }
+                $error = 'Unable to add the movie. Please try again.';
+            } catch (PDOException $e) {
+                $error = 'Database error. Unable to add the movie.';
+            }
+        }
+
+        $movies = $movieModel->getAllMovies();
+        $pageTitle = 'Manage Movies | SCREENHOUSE';
+        $basePath = '../';
+        $message = '';
+        $old = [
+            'title' => $title,
+            'genre' => $genre,
+            'duration' => $durationInput
+        ];
+
+        require __DIR__ . '/../Views/admin/movies/index.php';
     }
 
-    // Keep the form and movie list on the same page
-    $movies = $movieModel->getAllMovies();
-
-    $pageTitle = 'Manage Movies | SCREENHOUSE';
-
-    $message = '';
-
-    $old = [
-        'title' => $title,
-        'genre' => $genre,
-        'duration' => $durationInput
-    ];
-
-    require __DIR__ . '/../Views/admin/movies/index.php';
-}
-   // ADMIN: Display Edit Movie form
+    // ADMIN: Display Edit Movie form
     public function edit(): void
     {
         $movieId = (int) ($_GET['id'] ?? 0);
@@ -192,6 +194,12 @@ public function store(): void
     // ADMIN: Update movie
     public function update(): void
     {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            header('Location: /movies-booking/admin/movies?status=csrf_error');
+            exit;
+        }
+
         $movieId = (int) ($_POST['movie_id'] ?? 0);
         $title = trim($_POST['title'] ?? '');
         $genre = trim($_POST['genre'] ?? '');
@@ -207,10 +215,11 @@ public function store(): void
             return;
         }
 
-        if ($title === '' || $genre === '' || $duration === false || $duration <= 0) {
+        // 2. Server-side Validation
+        if (strlen($title) < 2 || strlen($genre) < 2 || $duration === false || $duration <= 0) {
             $pageTitle = 'Edit Movie | SCREENHOUSE';
             $basePath = '../';
-            $error = 'Please enter all movie information correctly.';
+            $error = 'Please enter valid movie information.';
 
             $movie['title'] = $title;
             $movie['genre'] = $genre;
@@ -241,6 +250,12 @@ public function store(): void
     // ADMIN: Delete movie
     public function delete(): void
     {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            header('Location: /movies-booking/admin/movies?status=csrf_error');
+            exit;
+        }
+
         $movieId = (int) ($_POST['movie_id'] ?? 0);
 
         if ($movieId <= 0) {
@@ -258,6 +273,31 @@ public function store(): void
         }
 
         header('Location: /movies-booking/admin/movies?status=' . $status);
+        exit;
+    }
+
+    // ==========================================
+    // API: Live Search for Movies (JSON)
+    // ==========================================
+    public function searchJson(): void
+    {
+        // Set the response type to JSON
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Get the search query from the URL (e.g., ?q=Batman)
+        $query = trim($_GET['q'] ?? '');
+
+        $movieModel = new Movie($this->conn);
+
+        // Fetch movies based on search
+        if ($query === '') {
+            $movies = $movieModel->getAllMovies();
+        } else {
+            $movies = $movieModel->searchMovies($query);
+        }
+
+        // Output as JSON and stop the script
+        echo json_encode($movies);
         exit;
     }
 }

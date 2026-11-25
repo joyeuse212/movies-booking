@@ -26,6 +26,9 @@
             <form method="POST"
                   action="/movies-booking/admin/showtimes/update">
 
+                <!-- ADDED CSRF TOKEN HERE -->
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+
                 <input type="hidden"
                        name="showtime_id"
                        value="<?= (int) $showtime['showtime_id'] ?>">

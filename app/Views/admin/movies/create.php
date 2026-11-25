@@ -13,6 +13,9 @@ require_once __DIR__ . '/../../../../includes/header.php';
 
     <form method="POST" action="/movies-booking/admin/movies/store">
 
+        <!-- ADD THIS LINE FOR CSRF SECURITY -->
+        <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+
         <div>
             <label for="title">Movie Title:</label>
             <input

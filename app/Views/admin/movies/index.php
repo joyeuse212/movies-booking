@@ -27,6 +27,9 @@ require_once __DIR__ . '/../../../../includes/header.php';
             <h2>Add New Movie</h2>
 
             <form method="POST" action="/movies-booking/admin/movies/store">
+                
+                <!-- ADDED CSRF TOKEN HERE -->
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
 
                 <label for="title">Movie Title:</label>
                 <input
@@ -125,6 +128,9 @@ require_once __DIR__ . '/../../../../includes/header.php';
                                                     name="movie_id"
                                                     value="<?= (int)$movie['movie_id'] ?>"
                                                 >
+                                                
+                                                <!-- ADDED CSRF TOKEN HERE -->
+                                                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
 
                                                 <button type="submit" class="delete-button">
                                                     Delete

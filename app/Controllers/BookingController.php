@@ -40,6 +40,13 @@ class BookingController
     // Process demo payment and save booking
     public function store(): void
     {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            // Redirect back to seats or show error
+            header('Location: /movies-booking/customer/movies');
+            exit;
+        }
+
         $showtimeId = (int) ($_POST['showtime_id'] ?? 0);
         $seatNo = trim($_POST['seat_no'] ?? '');
         $paymentMethod = $_POST['payment_method'] ?? '';
@@ -118,17 +125,17 @@ class BookingController
 
         require __DIR__ . '/../Views/customer/dashboard/index.php';
     }
+
     // ADMIN: Display all customer bookings
-public function adminIndex(): void
-{
-    $bookingModel = new Booking($this->conn);
+    public function adminIndex(): void
+    {
+        $bookingModel = new Booking($this->conn);
 
-    $bookings = $bookingModel->getAllBookings();
+        $bookings = $bookingModel->getAllBookings();
 
-    $pageTitle = 'View Bookings | SCREENHOUSE';
-    $basePath = '../';
+        $pageTitle = 'View Bookings | SCREENHOUSE';
+        $basePath = '../';
 
-    require __DIR__ . '/../Views/admin/bookings/index.php';
-}
-
+        require __DIR__ . '/../Views/admin/bookings/index.php';
+    }
 }

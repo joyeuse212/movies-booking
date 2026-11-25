@@ -1,4 +1,3 @@
-
 <?php require_once __DIR__ . '/../../../../includes/header.php'; ?>
 
 <section class="seats-page">
@@ -86,12 +85,14 @@
                     <span><i class="legend-seat booked"></i>Booked</span>
                 </div>
 
-                <form method="POST"
-                      action="/movies-booking/customer/checkout">
+                <!-- CHANGED METHOD TO GET -->
+                <form method="GET"
+                      action="/movies-booking/customer/checkout"
+                      id="seatForm">
 
                     <input
                         type="hidden"
-                        name="showtime_id"
+                        name="id"
                         value="<?= (int) $showtime['showtime_id'] ?>"
                     >
 
@@ -122,7 +123,7 @@
 
                                             <input
                                                 type="radio"
-                                                name="seat_no"
+                                                name="seat"
                                                 value="<?= $seatNo ?>"
                                                 <?= $selectedSeat === $seatNo ? 'checked' : '' ?>
                                                 required

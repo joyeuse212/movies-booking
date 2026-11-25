@@ -14,9 +14,20 @@
             </p>
         </div>
 
-        <?php if (count($movies) > 0): ?>
+        <!-- LIVE SEARCH BAR ADDED HERE -->
+        <div class="search-container" style="margin-bottom: 30px; text-align: center;">
+            <input 
+                type="text" 
+                id="movie-search" 
+                placeholder="Search movies by title or genre..." 
+                style="padding: 10px 15px; width: 100%; max-width: 400px; border-radius: 5px; border: 1px solid #ccc;"
+            >
+        </div>
 
-            <div class="movie-grid">
+        <!-- ADDED ID TO GRID FOR JAVASCRIPT -->
+        <div class="movie-grid" id="movie-grid">
+
+            <?php if (count($movies) > 0): ?>
 
                 <?php foreach ($movies as $movie): ?>
 
@@ -69,22 +80,94 @@
 
                 <?php endforeach; ?>
 
-            </div>
+            <?php else: ?>
 
-        <?php else: ?>
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <h3>No Movies Available</h3>
 
-            <div class="empty-state">
-                <h3>No Movies Available</h3>
+                    <p>
+                        Our movie collection is being prepared.
+                        Please check back soon.
+                    </p>
+                </div>
 
-                <p>
-                    Our movie collection is being prepared.
-                    Please check back soon.
-                </p>
-            </div>
+            <?php endif; ?>
 
-        <?php endif; ?>
+        </div>
 
     </div>
 
 </section>
+
+<!-- JAVASCRIPT FOR LIVE SEARCH (JSON API) -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('movie-search');
+    const movieGrid = document.getElementById('movie-grid');
+
+    // Listen for typing in the search bar
+    searchInput.addEventListener('input', function() {
+        const query = this.value;
+
+        // Fetch data from our new JSON API
+        fetch('/movies-booking/api/movies/search?q=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(movies => {
+                
+                // Clear the current grid
+                movieGrid.innerHTML = '';
+
+                if (movies.length > 0) {
+                    // Loop through the JSON response and build HTML
+                    movies.forEach(movie => {
+                        // Determine image (matching your PHP logic)
+                        const movieImages = {
+                            'Avatar': 'avatar.jpg',
+                            'John Wick': 'john-wick.jpeg',
+                            'The Batman': 'the-batman.jpg',
+                            'Doinglife': 'doinglife.jpg',
+                            'Wicked': 'wicked.jpg',
+                            'Gradiator': 'gradiator.jpg'
+                        };
+                        
+                        const image = movieImages[movie.title] || '';
+                        let posterHTML = '';
+
+                        if (image !== '') {
+                            posterHTML = `<img src="../assets/images/${image}" alt="${movie.title}">`;
+                        } else {
+                            posterHTML = `<span>SCREENHOUSE</span><h3>${movie.title}</h3>`;
+                        }
+
+                        // Create the movie card HTML
+                        const cardHTML = `
+                            <article class="movie-card">
+                                <div class="movie-poster">
+                                    ${posterHTML}
+                                </div>
+                                <div class="movie-info">
+                                    <h3>${movie.title}</h3>
+                                    <p>${movie.genre} <span>•</span> ${movie.duration} minutes</p>
+                                    <a href="movie-details?id=${movie.movie_id}">View Showtimes →</a>
+                                </div>
+                            </article>
+                        `;
+
+                        movieGrid.insertAdjacentHTML('beforeend', cardHTML);
+                    });
+                } else {
+                    // Show empty state if no results
+                    movieGrid.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <h3>No Movies Found</h3>
+                            <p>Try searching for a different title or genre.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => console.error('Error fetching movies:', error));
+    });
+});
+</script>
+
 <?php require_once __DIR__ . '/../../../../includes/footer.php'; ?>

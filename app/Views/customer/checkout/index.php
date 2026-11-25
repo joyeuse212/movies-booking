@@ -94,6 +94,9 @@
                   action="/movies-booking/customer/checkout"
                   id="paymentForm">
 
+                <!-- ADDED CSRF TOKEN HERE -->
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
+
                 <input type="hidden" name="confirm_payment" value="1">
 
                 <input type="hidden"

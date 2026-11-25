@@ -24,18 +24,15 @@
             </p>
         <?php endif; ?>
 
-        <?php if (($_GET['status'] ?? '') === 'invalid'): ?>
-            <p class="error-message">
-                Please enter all showtime information correctly.
-            </p>
-        <?php endif; ?>
-
         <div class="auth-card">
 
             <h2>Add New Showtime</h2>
 
             <form method="POST"
                   action="/movies-booking/admin/showtimes/store">
+
+                <!-- ADDED CSRF TOKEN HERE -->
+                <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
 
                 <label>Select Movie</label>
 
@@ -132,6 +129,9 @@
                                             <input type="hidden"
                                                    name="showtime_id"
                                                    value="<?= (int) $showtime['showtime_id'] ?>">
+                                                   
+                                            <!-- ADDED CSRF TOKEN HERE -->
+                                            <input type="hidden" name="csrf_token" value="<?= generate_csrf_token() ?>">
 
                                             <button type="submit"
                                                     class="delete-button">

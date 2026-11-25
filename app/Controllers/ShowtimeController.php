@@ -40,6 +40,10 @@ class ShowtimeController
             $error = 'Showtime not found.';
         } elseif ($status === 'updated') {
             $success = 'Showtime updated successfully!';
+        } elseif ($status === 'invalid') {
+            $error = 'Please enter all showtime information correctly.';
+        } elseif ($status === 'csrf_error') {
+            $error = 'Security token invalid. Please try again.';
         }
 
         require __DIR__ . '/../Views/admin/showtimes/index.php';
@@ -48,15 +52,22 @@ class ShowtimeController
     // ADMIN: Add a new showtime
     public function store(): void
     {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            header('Location: /movies-booking/admin/showtimes?status=csrf_error');
+            exit;
+        }
+
         $movieId = (int) ($_POST['movie_id'] ?? 0);
         $hall = trim($_POST['hall'] ?? '');
         $startTime = trim($_POST['start_time'] ?? '');
         $priceInput = $_POST['price'] ?? '';
         $price = filter_var($priceInput, FILTER_VALIDATE_FLOAT);
 
+        // 2. Server-side validation
         if (
             $movieId <= 0 ||
-            $hall === '' ||
+            strlen($hall) < 2 ||
             $startTime === '' ||
             $price === false ||
             $price <= 0
@@ -80,7 +91,7 @@ class ShowtimeController
                 exit;
             }
         } catch (\PDOException $e) {
-            // Do not expose database errors to users.
+            // Log error internally if needed
         }
 
         header('Location: /movies-booking/admin/showtimes?status=invalid');
@@ -90,6 +101,12 @@ class ShowtimeController
     // ADMIN: Delete a showtime
     public function delete(): void
     {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            header('Location: /movies-booking/admin/showtimes?status=csrf_error');
+            exit;
+        }
+
         $showtimeId = (int) ($_POST['showtime_id'] ?? 0);
 
         if ($showtimeId <= 0) {
@@ -115,7 +132,6 @@ class ShowtimeController
         $showtimeId = (int) ($_GET['id'] ?? 0);
 
         $showtimeModel = new Showtime($this->conn);
-
         $showtime = $showtimeModel->getShowtimeById($showtimeId);
 
         if (!$showtime) {
@@ -141,6 +157,12 @@ class ShowtimeController
     // ADMIN: Update Showtime
     public function update(): void
     {
+        // 1. Verify CSRF Token
+        if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+            header('Location: /movies-booking/admin/showtimes?status=csrf_error');
+            exit;
+        }
+
         $showtimeId = (int) ($_POST['showtime_id'] ?? 0);
         $movieId = (int) ($_POST['movie_id'] ?? 0);
         $hall = trim($_POST['hall'] ?? '');
@@ -149,7 +171,6 @@ class ShowtimeController
         $price = filter_var($priceInput, FILTER_VALIDATE_FLOAT);
 
         $showtimeModel = new Showtime($this->conn);
-
         $showtime = $showtimeModel->getShowtimeById($showtimeId);
 
         if (!$showtime) {
@@ -158,9 +179,10 @@ class ShowtimeController
             return;
         }
 
+        // 2. Server-side validation
         if (
             $movieId <= 0 ||
-            $hall === '' ||
+            strlen($hall) < 2 ||
             $startTime === '' ||
             $price === false ||
             $price <= 0

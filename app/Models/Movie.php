@@ -105,4 +105,20 @@ class Movie
 
         return $stmt->rowCount() > 0;
     }
+
+    // API: Search movies by title or genre
+    public function searchMovies(string $query): array
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT movie_id, title, genre, duration
+             FROM movies
+             WHERE title LIKE ? OR genre LIKE ?
+             ORDER BY title ASC"
+        );
+
+        $searchTerm = '%' . $query . '%';
+        $stmt->execute([$searchTerm, $searchTerm]);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
